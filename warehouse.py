@@ -13,6 +13,8 @@ class Warehouse:
         self.aisle_to_shelf_weight = 4
         self.aisle_to_aisle_weight = 1
         self.aisle_to_door_weight = 2
+        self.zones = {}
+        self.zone_door_map = {}
     
     def xy_to_ij(self, x, y):
         return self.WH_height-1-y, x
@@ -27,12 +29,12 @@ class Warehouse:
             if -1 < c[0] < self.WH_height and -1 < c[1] < self.WH_width:
                 target.append(self.WH_grid[c[0]][c[1]])
         return target
-        
+    
     def link_row_wise(self):    
         conn=nx.get_node_attributes(self.WH_graph,'conn')       
         for r in self.WH_grid:            
             for left, right in zip(r[:-1], r[1:]):                
-                if conn[left] in ('A', 'R') and conn[right] in ('A','L') and not ('SHELF' in left and 'SHELF' in right):                
+                if conn[left] in ('A', 'R','RL') and conn[right] in ('A','L','RL') and not ('SHELF' in left and 'SHELF' in right):                
                     weight_ = self.aisle_to_aisle_weight
                     if ('AISLE' in left and 'DOOR' in right) or ('DOOR' in left and 'AISLE' in right) :
                         weight_ = self.aisle_to_door_weight
@@ -45,7 +47,7 @@ class Warehouse:
         for c in zip(*self.WH_grid):
             c = [*c]
             for up, down in zip(c[:-1], c[1:]):
-                if (conn[up] in ('A', 'D') and conn[down] in ('A','U')) and not ('SHELF' in up and 'SHELF' in down) :           
+                if (conn[up] in ('A', 'D','UD') and conn[down] in ('A','U','UD')) and not ('SHELF' in up and 'SHELF' in down) :           
                     weight_ = self.aisle_to_aisle_weight
                     if ('AISLE' in up and 'DOOR' in down) or ('DOOR' in up and 'AISLE' in down) :
                         weight_ = self.aisle_to_door_weight
@@ -96,7 +98,7 @@ class Warehouse:
         """
         Args:
           pos: list of (x,y) of each shelf.
-          conn: direction of shelf face. One of {'A'(ll), 'L'(eft), 'R'(ight), 'U'(p), 'D'(own), 'N'(one)}.
+          conn: direction of shelf face. One of {'A'(ll), 'L'(eft), 'R'(ight), 'U'(p), 'D'(own), 'LR', 'UD', 'N'(one)}.
         """
         
         for p in pos:
@@ -153,15 +155,178 @@ class Warehouse:
 #         print(self.WH_graph.edges)
     
     def get_layout_for_render(self):
-        coords=nx.get_node_attributes(self.WH_graph,'coords')  
+        coords=nx.get_node_attributes(self.WH_graph,'coords')
+        conn = nx.get_node_attributes(self.WH_graph,'conn')
         retDict = {
             'X_RANGE' : (0, self.WH_width-1),
             'Y_RANGE' : (0, self.WH_height-1),
-            'DOORS'   : [coords[d] for d in self.WH_door_node_list],
-            'SHELVES' : [coords[d] for d in self.WH_shelf_node_list],
-            'BLOCKS'  : [coords[d] for d in self.WH_block_node_list]
+            'DOORS'   : [(*coords[n], conn[n]) for n in self.WH_door_node_list],
+            'SHELVES' : [(*coords[n], conn[n]) for n in self.WH_shelf_node_list],
+            'BLOCKS'  : [coords[n] for n in self.WH_block_node_list]
         }
         
         return retDict
+    
+    def set_zone_counter(self, itemManager):
+        
+        zone_counters = {}
+
+        for z in self.zones:
+
+            z_cnt = collections.Counter()
+            for shelf in self.zones[z]['SHELF']:
+
+                z_cnt = z_cnt + collections.Counter(itemManager.shelves[shelf])
+
+            zone_counters[z] = z_cnt
+
+        self.zone_counter = zone_counters
+    
+    def tmp_set_zone(self, zone_name, shelf_node_list_in_zone, aisle_node_list_in_zone):
+        
+        cx = 0
+        cy = 0
+        
+        vmin = 100000
+        vmax = -1
+        
+        hmin = 100000
+        hmax = -1
+        
+        coords=nx.get_node_attributes(self.WH_graph,'coords')
+        count = 0
+       # print(shelf_node_list_in_zone)
+        for sn in shelf_node_list_in_zone:
+            #print(coords[sn])
+            cx += coords[sn][0]
+            cy += coords[sn][1]
+            count += 1
+        #print(aisle_node_list_in_zone)
+        for an in aisle_node_list_in_zone:
+            #print(coords[an])
+            
+            ax, ay = coords[an][0], coords[an][1]
+            
+            cx += ax
+            cy += ay
+            
+            if vmin > ay:
+                vmin = ay
+            if vmax < ay:
+                vmax = ay
+            if hmin > ax:
+                hmin = ax
+            if hmax < ax:
+                hmax = ax
+            
+            vgap = vmax-vmin
+            hgap = hmax-hmin
+            
+            zone_type = 'V'
+            
+            if hgap > vgap:
+                zone_type = 'H'
+            
+            count += 1
+            
+        cx /= count
+        cy /= count
+        
+        self.zones[zone_name] = {'SHELF':shelf_node_list_in_zone, 'AISLE':aisle_node_list_in_zone, 'CENTER':(cx,cy), 'ZONE_TYPE':zone_type}
+        
+        if 'D' in zone_name:
+            for a in aisle_node_list_in_zone:
+                self.zone_door_map[a] = zone_name
+        
+        
+    def tmp_abstract_graph(self):
+        
+        self.WH_abstract_graph = nx.Graph()
+        
+        
+        ref = [
+            ['Z{}_4'.format(i) for i in range(1,11) ],
+            ['Z{}_3'.format(i) for i in range(1,11) ],
+            ['Z{}_2'.format(i) for i in range(1,11) ],
+            ['Z{}_1'.format(i) for i in range(1,11) ],
+            ['D{}'.format(i) for i in range(1,11)]
+        ]
+        
+        for a,b,c,d,e in zip(*ref):
+            self.WH_abstract_graph.add_edge(a,  b, weight=11)
+            self.WH_abstract_graph.add_edge(b,  c, weight=12)
+            self.WH_abstract_graph.add_edge(c,  d, weight=11)
+            self.WH_abstract_graph.add_edge(d, e, weight=7)
+
+        ref2 = [15 + 3*i for i in range(9)]
+        ref3 = [10 + 3*i for i in range(9)]
+        ref4 = [3 + 3*i for i in range(9)]
+        
+        ref_zx_1 = [1+i*3 for i in range(10)]
+        ref_dx = [1+i*3 for i in range(10)]
+        
+        for i,zx in enumerate(ref_zx_1):
+            for j, dx in enumerate(ref_dx):
+                self.WH_abstract_graph.add_edge(ref[3][i], ref[4][j], weight= abs(zx-dx)+7)
+        
+        for i in range(9):
+            for j in range(i, 10):
+                
+                dx1 = ref_dx[i]
+                dx2 = ref_dx[j]
+                self.WH_abstract_graph.add_edge(ref[4][i], ref[4][j], weight= abs(dx1-dx2))
+        
+        
+        
+        for i in range(10):
+            
+            fromz4 = ref[0][i]
+            fromz3 = ref[1][i]
+            fromz2 = ref[2][i]
+            fromz1 = ref[3][i]
+            fromd = ref[4][i]
+            
+            self.zones[fromz4]['TIE_APPROACH'] = 'UD'
+            self.zones[fromz3]['TIE_APPROACH'] = 'DU'
+            self.zones[fromz2]['TIE_APPROACH'] = 'UD'
+            self.zones[fromz1]['TIE_APPROACH'] = 'DU'
+            self.zones[fromd]['TIE_APPROACH'] = 'UD'
+            
+            tozs4 = ref[0][i+1:]
+            tozs3 = ref[1][i+1:]
+            tozs2 = ref[2][i+1:]
+            tozs1 = ref[3][i+1:]
+            for j in range(len(tozs4)):
+                
+                self.WH_abstract_graph.add_edge(fromz4, tozs4[j], weight=ref2[j])
+                
+                self.WH_abstract_graph.add_edge(fromz3, tozs3[j], weight=ref2[j])
+                self.WH_abstract_graph.add_edge(fromz2, tozs3[j], weight=ref2[j])
+                self.WH_abstract_graph.add_edge(fromz2, tozs2[j], weight=ref2[j])
+                self.WH_abstract_graph.add_edge(fromz1, tozs1[j], weight=ref2[j])
+                    
+        
+        
+if __name__ == "__main__":
+    wh = Warehouse()
+
+    wh.set_grid_layout(30,49)
+
+    wh.set_doors([(1,0), (4,0), (7,0), (10,0), (13,0), (16,0), (19,0), (22,0), (25,0), (28,0)])
+
+    wh.set_shelves([(0,i) for i in range(2,47)], 'R')
+    wh.set_shelves([(29,i) for i in range(2,47)], 'L')
+
+    for x in [2+3*j for j in range(9)]:
+        wh.set_shelves([(x,i) for i in range(2,24)], 'L')
+        wh.set_shelves([(x,i) for i in range(25,47)], 'L')
+
+        wh.set_shelves([(x+1,i) for i in range(2,47)], 'R')
+        wh.set_shelves([(x+1,i) for i in range(25,47)], 'R')
+
+    wh.build_layout()
+
+    wh.get_layout_for_render()
+
 
         
