@@ -96,6 +96,7 @@ class JobManager:
         order_ids = order_df['ORDER_ID'].unique()
         order_df = order_df.sort_values(by=['DUE', 'VOL'], ascending = [True, False])
         order_df['JOB_ID'] = ""
+        order_df['SORT_ATTB'] = order_df['START'] + order_df['DUE']
         
         tmp_bag = []
         
@@ -121,4 +122,4 @@ class JobManager:
         
         out_df = tmp_bag[0].append(tmp_bag[1:])
         
-        return out_df
+        return out_df.sort_values(by=['SORT_ATTB', 'VOL'] , ascending = [True, False])
