@@ -5,6 +5,9 @@ import random
 import networkx as nx
 import json
 import collections
+from order import Order
+
+random.seed(11)
 
 def find_all_adj(G, zone_list):
     
@@ -164,7 +167,7 @@ def get_detail_and_consume(WH, zc, abstract_path, order, im):
         
         ocnt = ocnt - collections.Counter()
         print(ocnt)  
-        
+        zc[zone] -= usable
         
         outerbag.append(node_to_be_visit)
             
@@ -241,13 +244,15 @@ def path2Coords(G, path, startingTimeOffset):
         
         cur_holding = item_holding.copy()
         
+        check = False
         if n2[1] != '':
             item_holding[n2[1]] += 1
+            check = True
         
         
         it_ = dict(cur_holding)
         
-        ret.append({'from':coords[u], 'to':coords[v], 'duration':G[u][v]['weight'], 'current':cur, 'item_holding':it_})
+        ret.append({'from':coords[u], 'to':coords[v], 'duration':G[u][v]['weight'], 'current':cur, 'item_holding':it_, 'grab_item':check})
         cur = cur + G[u][v]['weight']
         time_consumed += G[u][v]['weight']
     
