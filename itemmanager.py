@@ -35,7 +35,7 @@ class ItemManager:
         self.shelves[addTo].append(item)
         self.items[item].append(addTo)
         
-    def use_item(self, item, useFrom):
+    def consume_item(self, item, useFrom):
         
         # check availability fisrt!
         self.consumed_item[useFrom] = item
