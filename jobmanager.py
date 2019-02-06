@@ -7,7 +7,6 @@ class JobManager:
     
     def __init__(self, orders, item_attb):
         
-        
         order_ids = []
         order_items = []
         order_dues = []
@@ -92,12 +91,11 @@ class JobManager:
         
         order_df = self.order_df.copy()
         
-        
         order_ids = order_df['ORDER_ID'].unique()
-        order_df = order_df.sort_values(by=['DUE', 'VOL'], ascending = [True, False])
-        order_df['JOB_ID'] = ""
         order_df['SORT_ATTB'] = order_df['START'] + order_df['DUE']
-        
+        order_df = order_df.sort_values(by=['SORT_ATTB', 'VOL'], ascending = [True, False])
+        order_df['JOB_ID'] = ""
+        # print('before\n',order_df)
         tmp_bag = []
         
         for oi in order_ids:
@@ -122,4 +120,9 @@ class JobManager:
         
         out_df = tmp_bag[0].append(tmp_bag[1:])
         
-        return out_df.sort_values(by=['SORT_ATTB', 'VOL'] , ascending = [True, False])
+
+
+        # print('end\n',out_df.sort_values(by=['START', 'VOL'] , ascending = [True, False]))
+
+        # return out_df.sort_values(by=['DUE', 'VOL'] , ascending = [True, False])
+        return out_df.sort_values(by=['SORT_ATTB'] )

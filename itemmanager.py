@@ -95,16 +95,9 @@ def gen_test_items(orders, wh, name):
             unoccupied.append((x, y))
 
 
-    mult = len(unoccupied) / sum(ic.values())
+    # mult = len(unoccupied) / sum(ic.values())
 
-    if mult < 1:
-
-        "************************REPLENISH ITEMS FIRST!!!!!!!!!!!!!!*********************"
-    else:
-        if mult * 0.8 > 1:
-            mult = mult * 0.8
-        else:
-            mult = mult
+    mult = 2
 
     for each_item in full_list:
 
