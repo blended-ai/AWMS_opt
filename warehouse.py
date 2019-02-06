@@ -1,5 +1,6 @@
 import networkx as nx
 import collections 
+from copy import deepcopy
 
 class Warehouse:
     
@@ -274,10 +275,10 @@ class Warehouse:
                 
                 dx1 = ref_dx[i]
                 dx2 = ref_dx[j]
-                self.WH_abstract_graph.add_edge(ref[4][i], ref[4][j], weight= abs(dx1-dx2))
         
         
         
+                self.WH_abstract_graph.add_edge(ref[4][i], ref[4][j], weight= abs(dx1-dx2) + 2)
         for i in range(10):
             
             fromz4 = ref[0][i]
@@ -305,7 +306,142 @@ class Warehouse:
                 self.WH_abstract_graph.add_edge(fromz2, tozs2[j], weight=ref2[j])
                 self.WH_abstract_graph.add_edge(fromz1, tozs1[j], weight=ref2[j])
                     
-        
+
+
+def gen_test_wh_layout():
+    wh = Warehouse()
+
+    wh.set_grid_layout(30, 49)
+
+    wh.set_doors([(1, 0), (4, 0), (7, 0), (10, 0), (13, 0), (16, 0), (19, 0), (22, 0), (25, 0), (28, 0)])
+
+    wh.set_shelves([(0, i) for i in range(2, 47)], 'R')
+    wh.set_shelves([(29, i) for i in range(2, 47)], 'L')
+
+    for x in [2 + 3 * j for j in range(9)]:
+        wh.set_shelves([(x, i) for i in range(2, 24)], 'L')
+        wh.set_shelves([(x, i) for i in range(25, 47)], 'L')
+
+        wh.set_shelves([(x + 1, i) for i in range(2, 47)], 'R')
+        wh.set_shelves([(x + 1, i) for i in range(25, 47)], 'R')
+
+    wh.build_layout()
+
+    return wh
+
+def gen_test_zone(wh_, im):
+
+    wh = deepcopy(wh_)
+
+    sc4 = [i for i in range(36, 47)]
+    sc3 = [i for i in range(25, 36)]
+    sc2 = [i for i in range(13, 24)]
+    sc1 = [i for i in range(2, 13)]
+
+    wh.tmp_set_zone('D1', [], ['DOOR_(1,0)'])
+    wh.tmp_set_zone('D2', [], ['DOOR_(4,0)'])
+    wh.tmp_set_zone('D3', [], ['DOOR_(7,0)'])
+    wh.tmp_set_zone('D4', [], ['DOOR_(10,0)'])
+    wh.tmp_set_zone('D5', [], ['DOOR_(13,0)'])
+    wh.tmp_set_zone('D6', [], ['DOOR_(16,0)'])
+    wh.tmp_set_zone('D7', [], ['DOOR_(19,0)'])
+    wh.tmp_set_zone('D8', [], ['DOOR_(22,0)'])
+    wh.tmp_set_zone('D9', [], ['DOOR_(25,0)'])
+    wh.tmp_set_zone('D10', [], ['DOOR_(28,0)'])
+    wh.tmp_set_zone('Z1_4', ['SHELF_(0,{})'.format(i) for i in sc4] + ['SHELF_(2,{})'.format(i) for i in sc4],
+                    ['AISLE_(1,{})'.format(i) for i in sc4])
+    wh.tmp_set_zone('Z1_3', ['SHELF_(0,{})'.format(i) for i in sc3] + ['SHELF_(2,{})'.format(i) for i in sc3],
+                    ['AISLE_(1,{})'.format(i) for i in sc3])
+    wh.tmp_set_zone('Z1_2', ['SHELF_(0,{})'.format(i) for i in sc2] + ['SHELF_(2,{})'.format(i) for i in sc2] + [
+        'SHELF_(0,24)'], ['AISLE_(1,{})'.format(i) for i in sc2])
+    wh.tmp_set_zone('Z1_1', ['SHELF_(0,{})'.format(i) for i in sc1] + ['SHELF_(2,{})'.format(i) for i in sc1],
+                    ['AISLE_(1,{})'.format(i) for i in sc1])
+
+    wh.tmp_set_zone('Z2_4', ['SHELF_(3,{})'.format(i) for i in sc4] + ['SHELF_(5,{})'.format(i) for i in sc4],
+                    ['AISLE_(4,{})'.format(i) for i in sc4])
+    wh.tmp_set_zone('Z2_3', ['SHELF_(3,{})'.format(i) for i in sc3] + ['SHELF_(5,{})'.format(i) for i in sc3],
+                    ['AISLE_(4,{})'.format(i) for i in sc3])
+    wh.tmp_set_zone('Z2_2', ['SHELF_(3,{})'.format(i) for i in sc2] + ['SHELF_(5,{})'.format(i) for i in sc2],
+                    ['AISLE_(4,{})'.format(i) for i in sc2])
+    wh.tmp_set_zone('Z2_1', ['SHELF_(3,{})'.format(i) for i in sc1] + ['SHELF_(5,{})'.format(i) for i in sc1],
+                    ['AISLE_(4,{})'.format(i) for i in sc1])
+
+    wh.tmp_set_zone('Z3_4', ['SHELF_(6,{})'.format(i) for i in sc4] + ['SHELF_(8,{})'.format(i) for i in sc4],
+                    ['AISLE_(7,{})'.format(i) for i in sc4])
+    wh.tmp_set_zone('Z3_3', ['SHELF_(6,{})'.format(i) for i in sc3] + ['SHELF_(8,{})'.format(i) for i in sc3],
+                    ['AISLE_(7,{})'.format(i) for i in sc3])
+    wh.tmp_set_zone('Z3_2', ['SHELF_(6,{})'.format(i) for i in sc2] + ['SHELF_(8,{})'.format(i) for i in sc2],
+                    ['AISLE_(7,{})'.format(i) for i in sc2])
+    wh.tmp_set_zone('Z3_1', ['SHELF_(6,{})'.format(i) for i in sc1] + ['SHELF_(8,{})'.format(i) for i in sc1],
+                    ['AISLE_(7,{})'.format(i) for i in sc1])
+
+    wh.tmp_set_zone('Z4_4', ['SHELF_(9,{})'.format(i) for i in sc4] + ['SHELF_(11,{})'.format(i) for i in sc4],
+                    ['AISLE_(10,{})'.format(i) for i in sc4])
+    wh.tmp_set_zone('Z4_3', ['SHELF_(9,{})'.format(i) for i in sc3] + ['SHELF_(11,{})'.format(i) for i in sc3],
+                    ['AISLE_(10,{})'.format(i) for i in sc3])
+    wh.tmp_set_zone('Z4_2', ['SHELF_(9,{})'.format(i) for i in sc2] + ['SHELF_(11,{})'.format(i) for i in sc2],
+                    ['AISLE_(10,{})'.format(i) for i in sc2])
+    wh.tmp_set_zone('Z4_1', ['SHELF_(9,{})'.format(i) for i in sc1] + ['SHELF_(11,{})'.format(i) for i in sc1],
+                    ['AISLE_(10,{})'.format(i) for i in sc1])
+
+    wh.tmp_set_zone('Z5_4', ['SHELF_(12,{})'.format(i) for i in sc4] + ['SHELF_(14,{})'.format(i) for i in sc4],
+                    ['AISLE_(13,{})'.format(i) for i in sc4])
+    wh.tmp_set_zone('Z5_3', ['SHELF_(12,{})'.format(i) for i in sc3] + ['SHELF_(14,{})'.format(i) for i in sc3],
+                    ['AISLE_(13,{})'.format(i) for i in sc3])
+    wh.tmp_set_zone('Z5_2', ['SHELF_(12,{})'.format(i) for i in sc2] + ['SHELF_(14,{})'.format(i) for i in sc2],
+                    ['AISLE_(13,{})'.format(i) for i in sc2])
+    wh.tmp_set_zone('Z5_1', ['SHELF_(12,{})'.format(i) for i in sc1] + ['SHELF_(14,{})'.format(i) for i in sc1],
+                    ['AISLE_(13,{})'.format(i) for i in sc1])
+
+    wh.tmp_set_zone('Z6_4', ['SHELF_(15,{})'.format(i) for i in sc4] + ['SHELF_(17,{})'.format(i) for i in sc4],
+                    ['AISLE_(16,{})'.format(i) for i in sc4])
+    wh.tmp_set_zone('Z6_3', ['SHELF_(15,{})'.format(i) for i in sc3] + ['SHELF_(17,{})'.format(i) for i in sc3],
+                    ['AISLE_(16,{})'.format(i) for i in sc3])
+    wh.tmp_set_zone('Z6_2', ['SHELF_(15,{})'.format(i) for i in sc2] + ['SHELF_(17,{})'.format(i) for i in sc2],
+                    ['AISLE_(16,{})'.format(i) for i in sc2])
+    wh.tmp_set_zone('Z6_1', ['SHELF_(15,{})'.format(i) for i in sc1] + ['SHELF_(17,{})'.format(i) for i in sc1],
+                    ['AISLE_(16,{})'.format(i) for i in sc1])
+
+    wh.tmp_set_zone('Z7_4', ['SHELF_(18,{})'.format(i) for i in sc4] + ['SHELF_(20,{})'.format(i) for i in sc4],
+                    ['AISLE_(19,{})'.format(i) for i in sc4])
+    wh.tmp_set_zone('Z7_3', ['SHELF_(18,{})'.format(i) for i in sc3] + ['SHELF_(20,{})'.format(i) for i in sc3],
+                    ['AISLE_(19,{})'.format(i) for i in sc3])
+    wh.tmp_set_zone('Z7_2', ['SHELF_(18,{})'.format(i) for i in sc2] + ['SHELF_(20,{})'.format(i) for i in sc2],
+                    ['AISLE_(19,{})'.format(i) for i in sc2])
+    wh.tmp_set_zone('Z7_1', ['SHELF_(18,{})'.format(i) for i in sc1] + ['SHELF_(20,{})'.format(i) for i in sc1],
+                    ['AISLE_(19,{})'.format(i) for i in sc1])
+
+    wh.tmp_set_zone('Z8_4', ['SHELF_(21,{})'.format(i) for i in sc4] + ['SHELF_(23,{})'.format(i) for i in sc4],
+                    ['AISLE_(22,{})'.format(i) for i in sc4])
+    wh.tmp_set_zone('Z8_3', ['SHELF_(21,{})'.format(i) for i in sc3] + ['SHELF_(23,{})'.format(i) for i in sc3],
+                    ['AISLE_(22,{})'.format(i) for i in sc3])
+    wh.tmp_set_zone('Z8_2', ['SHELF_(21,{})'.format(i) for i in sc2] + ['SHELF_(23,{})'.format(i) for i in sc2],
+                    ['AISLE_(22,{})'.format(i) for i in sc2])
+    wh.tmp_set_zone('Z8_1', ['SHELF_(21,{})'.format(i) for i in sc1] + ['SHELF_(23,{})'.format(i) for i in sc1],
+                    ['AISLE_(22,{})'.format(i) for i in sc1])
+
+    wh.tmp_set_zone('Z9_4', ['SHELF_(24,{})'.format(i) for i in sc4] + ['SHELF_(26,{})'.format(i) for i in sc4],
+                    ['AISLE_(25,{})'.format(i) for i in sc4])
+    wh.tmp_set_zone('Z9_3', ['SHELF_(24,{})'.format(i) for i in sc3] + ['SHELF_(26,{})'.format(i) for i in sc3],
+                    ['AISLE_(25,{})'.format(i) for i in sc3])
+    wh.tmp_set_zone('Z9_2', ['SHELF_(24,{})'.format(i) for i in sc2] + ['SHELF_(26,{})'.format(i) for i in sc2],
+                    ['AISLE_(25,{})'.format(i) for i in sc2])
+    wh.tmp_set_zone('Z9_1', ['SHELF_(24,{})'.format(i) for i in sc1] + ['SHELF_(26,{})'.format(i) for i in sc1],
+                    ['AISLE_(25,{})'.format(i) for i in sc1])
+
+    wh.tmp_set_zone('Z10_4', ['SHELF_(27,{})'.format(i) for i in sc4] + ['SHELF_(29,{})'.format(i) for i in sc4],
+                    ['AISLE_(28,{})'.format(i) for i in sc4])
+    wh.tmp_set_zone('Z10_3', ['SHELF_(27,{})'.format(i) for i in sc3] + ['SHELF_(29,{})'.format(i) for i in sc3],
+                    ['AISLE_(28,{})'.format(i) for i in sc3])
+    wh.tmp_set_zone('Z10_2', ['SHELF_(27,{})'.format(i) for i in sc2] + ['SHELF_(29,{})'.format(i) for i in sc2],
+                    ['AISLE_(28,{})'.format(i) for i in sc2])
+    wh.tmp_set_zone('Z10_1', ['SHELF_(27,{})'.format(i) for i in sc1] + ['SHELF_(29,{})'.format(i) for i in sc1] + [
+        'SHELF_(29,24)'], ['AISLE_(28,{})'.format(i) for i in sc1])
+    wh.tmp_abstract_graph()
+
+    wh.set_zone_counter(im)
+
+    return wh
         
 if __name__ == "__main__":
     wh = Warehouse()
