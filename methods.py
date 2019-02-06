@@ -16,13 +16,14 @@ def find_all_adj(G, zone_list):
     from_zone = zone_list[-1]
     
     adj = nx.all_neighbors(G,from_zone)
-    
+
     for adj_i in adj:
-        
-        ret_temp.append(zone_list + [adj_i])
+
+        if "D" not in adj_i:
+            ret_temp.append(zone_list + [adj_i])
         
     for r in ret_temp:
-        
+        # check for meaningless cycle
         if len(set(r)) == len(r) :
             ret_final.append(r)
         
@@ -49,22 +50,23 @@ def check_fullfilment(zc, zone_list, orders):
         return False
     
 
-def dive_in(G, zc, origin, destination, order):
+def dive_in(G, zc, origin, destination, orders, threshold=100):
     
     bag = []
     
     candidate = [[origin]]
     
-    count = 1000
-    
-    while len(bag) < 20 and count > 0:
+    count = 30
+
+
+    while len(bag) < 5 and count > 0:
         
         candidate_branched = []
         
         for cd in candidate:
             adjs = find_all_adj(G, cd)
             for a in adjs:
-                if check_fullfilment(zc, a, order) :
+                if check_fullfilment(zc, a, orders) :
                     bag.append(a)
                 else:
                     candidate_branched.append(a)
@@ -73,16 +75,18 @@ def dive_in(G, zc, origin, destination, order):
         count -= 1
     
     ret = []
-        
+
     for b in bag:
         
         pp = nx.shortest_path(G, b[-1], destination)
         ret.append(b[:-1] + pp)
-        
-    
+
+    # print('Dive_IN RET:', ret)
     min_sum_weight = 100000000
     shortest_path = None
-    
+
+    paths = []
+
     for r in ret:
         sum_weight = 0
         
@@ -91,8 +95,17 @@ def dive_in(G, zc, origin, destination, order):
         if sum_weight < min_sum_weight:
             min_sum_weight = sum_weight
             shortest_path = r
-        
-    return shortest_path, min_sum_weight
+
+        paths.append((sum_weight*1.1 + 4, r))
+
+    return_paths = []
+
+    for ps in paths:
+
+        if ps[0] <= min_sum_weight + threshold :
+            return_paths.append(ps)
+
+    return return_paths
 
 def sort_visit(WH, abstract_from, abstract_to, node_to_visit):
     
@@ -201,6 +214,7 @@ def find_path(G, IM, node_to_visit):
     for s,t in zip(node_to_visit[:-1], node_to_visit[1:]):
        
         if s==t:
+            print(s,t, ret_path)
             ret_path = ret_path + [ret_path[-2], t]
             
         else :
