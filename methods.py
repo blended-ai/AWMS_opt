@@ -160,13 +160,13 @@ def get_detail_and_consume(WH, zc, abstract_path, order, im):
             for ii in intersection:
                 im.consume_item(key, ii)
                 
-                print(key, 'is consumed from ',ii)
+                # print(key, 'is consumed from ',ii)
                 
                 ocnt[key] -= 1
             #print(len(im.items[key]))
         
         ocnt = ocnt - collections.Counter()
-        print(ocnt)  
+        # print(ocnt)  
         zc[zone] -= usable
         
         outerbag.append(node_to_be_visit)
@@ -182,16 +182,15 @@ def get_detail_and_consume(WH, zc, abstract_path, order, im):
         if i==0:
             ret = ret+[origin]
             ret = ret + sort_visit(WH, abstract_path[0],  target[i], nodes)
-            
-        elif i == len(outerbag)-1:
-            
-            ret = ret + sort_visit(WH,  target[i], abstract_path[-1], nodes)
-            ret = ret + [dest]
-            
+
         else :
             
             ret = ret + sort_visit(WH,  target[i-1], target[i], nodes)
-            
+
+        if i == len(outerbag) - 1:
+
+            # ret = ret + sort_visit(WH, target[i], abstract_path[-1], nodes)
+            ret = ret + [dest]
             
     return ret
 
@@ -207,8 +206,6 @@ def find_path(G, IM, node_to_visit):
         else :
             path = nx.shortest_path(G, source = s, target = t ,weight ='weight')
             ret_path = ret_path[:-1] + path
-    
-    
     
     ret = []
     
@@ -268,65 +265,5 @@ def path2Coords(G, path, startingTimeOffset):
 
 
 
-def test_input_dependency_generation(item, prob):
-    # 대략적으로 의자 1는 발받침과 함께 쓸 수 있는 의자,
-    # 의자 2는 책상과 함께 쓸 수 있는 의자
-    # 의자 3는 탁자용 의자라고 하자!
-
-    # 물론 아무 상관 없이 들어올 수도 있다.
-    
-    supplementary = []
-    
-    if 'table' in item:
-        supplementary = ['chair_2'] * random.randrange(1,5)
-    elif 'desk' in item:
-        supplementary = ['chair_3']
-    elif 'chair_1' in item:
-        supplementary = ['footrest']
-    
-    if random.random() < prob:
-        
-        return [item] + supplementary
-    
-    else :
-        return [item]
-        
-
-def test_input_generation_randomly(dest, due, start):
-    # 탁자 1, 2, 3 의 선호도는 각각 6:3:1
-    # 책상 1, 2, 3 의 선호도는 각각 5:4:1
-    
-    itemset = []
-    
-    tableR = random.random()
-    
-    if  tableR > 0.6 :
-        itemset = itemset + test_input_dependency_generation('table_1',0.7)
-    elif tableR > 0.1 :
-        itemset = itemset + test_input_dependency_generation('table_2',0.7)
-    else :
-        itemset = itemset + test_input_dependency_generation('table_3',0.7)  
-    
-    deskR = random.random()
-    if  deskR > 0.5 :
-        itemset = itemset + test_input_dependency_generation('desk_1',0.3)
-    elif deskR > 0.1 :
-        itemset = itemset + test_input_dependency_generation('desk_2',0.3)
-    else :
-        itemset = itemset + test_input_dependency_generation('desk_3',0.3)  
-        
-    chairR = random.random() 
-    if  chairR > 0.8 :
-        itemset = itemset + test_input_dependency_generation('chair_1',0.5)
-    
-    chairR = random.random() 
-    if  chairR > 0.8 :
-        itemset = itemset + test_input_dependency_generation('chair_2',0.5)
-        
-    chairR = random.random() 
-    if  chairR > 0.8 :
-        itemset = itemset + test_input_dependency_generation('chair_3',0.5)
-    
-    return Order(itemset, dest, due, start)
 
 
